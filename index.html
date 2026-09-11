@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flow-MAR | One-Step Consistency Flow for CT Metal Artifact Reduction</title>
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* ===== Reset & Base ===== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #080c14;
+  --bg-elev: #0f1623;
+  --bg-card: #131c2e;
+  --border: #1e2a42;
+  --text: #e8edf5;
+  --text-muted: #8b9bb4;
+  --text-dim: #5a6a85;
+  --accent: #38bdf8;
+  --accent-2: #22d3ee;
+  --accent-glow: rgba(56, 189, 248, 0.15);
+  --success: #34d399;
+  --radius: 12px;
+  --max-w: 1100px;
+}
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+a { color: var(--accent); text-decoration: none; transition: color 0.2s; }
+a:hover { color: var(--accent-2); }
+code { font-family: 'JetBrains Mono', monospace; font-size: 0.9em; }
+
+/* ===== Navigation ===== */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(8, 12, 20, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  transition: transform 0.3s;
+}
+.nav-inner {
+  max-width: var(--max-w); margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 24px;
+}
+.nav-logo {
+  font-weight: 700; font-size: 1.1rem; letter-spacing: -0.02em;
+  display: flex; align-items: center; gap: 8px;
+}
+.nav-logo .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent);
+}
+.nav-links { display: flex; gap: 28px; }
+.nav-links a {
+  color: var(--text-muted); font-size: 0.88rem; font-weight: 500;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--text); }
+
+/* ===== Hero ===== */
+.hero {
+  position: relative;
+  padding: 140px 24px 80px;
+  text-align: center;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -200px; left: 50%; transform: translateX(-50%);
+  width: 800px; height: 600px;
+  background: radial-gradient(ellipse, var(--accent-glow) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(56, 189, 248, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56, 189, 248, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+  pointer-events: none;
+}
+.hero-content { position: relative; max-width: var(--max-w); margin: 0 auto; }
+.venue-tag {
+  display: inline-block;
+  padding: 6px 16px;
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  font-size: 0.8rem; font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+  margin-bottom: 28px;
+  background: var(--bg-elev);
+}
+.hero h1 {
+  font-size: clamp(2.2rem, 5vw, 3.6rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  margin-bottom: 20px;
+}
+.hero h1 .highlight {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-subtitle {
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  color: var(--text-muted);
+  max-width: 680px;
+  margin: 0 auto 36px;
+  font-weight: 400;
+}
+.authors {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 8px 20px; margin-bottom: 12px;
+  font-size: 0.95rem;
+}
+.authors span { color: var(--text); }
+.authors .affiliation { color: var(--text-dim); font-size: 0.85rem; }
+.hero-buttons {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 14px; margin-top: 36px;
+}
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 24px;
+  border-radius: var(--radius);
+  font-size: 0.92rem; font-weight: 600;
+  transition: all 0.2s;
+  cursor: pointer;
+  border: none;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #080c14;
+}
+.btn-primary:hover {
+  background: var(--accent-2);
+  color: #080c14;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(56, 189, 248, 0.3);
+}
+.btn-secondary {
+  background: var(--bg-card);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-2px);
+}
+.btn svg { width: 18px; height: 18px; }
+
+/* ===== Section Common ===== */
+.section {
+  padding: 80px 24px;
+  max-width: var(--max-w);
+  margin: 0 auto;
+}
+.section-label {
+  display: inline-block;
+  font-size: 0.78rem; font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+.section-title {
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 24px;
+}
+.section-divider {
+  width: 100%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+  margin: 0 auto;
+}
+
+/* ===== Abstract ===== */
+.abstract-box {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 36px 40px;
+  position: relative;
+}
+.abstract-box::before {
+  content: '"';
+  position: absolute; top: 10px; left: 20px;
+  font-size: 4rem; color: var(--accent); opacity: 0.2;
+  font-family: Georgia, serif; line-height: 1;
+}
+.abstract-box p {
+  color: var(--text-muted);
+  font-size: 0.98rem;
+  line-height: 1.85;
+  text-align: justify;
+}
+
+/* ===== Method ===== */
+.method-arch {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 40px;
+  margin: 32px 0;
+  overflow-x: auto;
+}
+.method-arch svg { width: 100%; height: auto; min-width: 600px; }
+.method-steps {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px; margin-top: 32px;
+}
+.method-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  transition: border-color 0.3s, transform 0.3s;
+}
+.method-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-4px);
+}
+.method-card .step-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 8px;
+  background: var(--accent-glow);
+  color: var(--accent);
+  font-weight: 700; font-size: 0.9rem;
+  margin-bottom: 16px;
+}
+.method-card h3 {
+  font-size: 1.05rem; font-weight: 600;
+  margin-bottom: 10px;
+}
+.method-card p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+/* ===== Results / Comparison ===== */
+.results-section { background: var(--bg-elev); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.results-inner { max-width: var(--max-w); margin: 0 auto; padding: 80px 24px; }
+.comparison-container {
+  margin: 32px 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg);
+}
+.comparison-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 24px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+}
+.comparison-header span {
+  font-size: 0.85rem; font-weight: 600;
+  color: var(--text-muted);
+}
+.comparison-header .label-input { color: #f87171; }
+.comparison-header .label-output { color: var(--success); }
+.comparison-slider {
+  position: relative;
+  width: 100%; aspect-ratio: 16/9;
+  overflow: hidden;
+  cursor: ew-resize;
+  user-select: none;
+}
+.comparison-slider .img-layer {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.9rem; color: var(--text-dim);
+}
+.comparison-slider .img-after {
+  background: linear-gradient(135deg, #0c1a2e 0%, #0f2847 100%);
+  clip-path: inset(0 0 0 50%);
+}
+.comparison-slider .img-before {
+  background: linear-gradient(135deg, #1a0f0f 0%, #2a1515 100%);
+}
+.comparison-slider .slider-handle {
+  position: absolute; top: 0; bottom: 0; left: 50%;
+  width: 3px; background: var(--accent);
+  transform: translateX(-50%);
+  z-index: 10;
+  pointer-events: none;
+}
+.comparison-slider .slider-handle::after {
+  content: '';
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
+}
+.comparison-slider .slider-handle::before {
+  content: '⟷';
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 11; color: #080c14;
+  font-size: 1rem; font-weight: 700;
+}
+.img-placeholder {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  color: var(--text-dim);
+  width: 100%;
+}
+.img-placeholder svg { width: 48px; height: 48px; opacity: 0.4; }
+.img-placeholder span { font-size: 0.85rem; }
+.comparison-slider .img-before .img-placeholder { align-items: flex-start; padding-left: 48px; }
+.comparison-slider .img-after .img-placeholder { align-items: flex-end; padding-right: 48px; }
+
+/* ===== Metrics ===== */
+.metrics-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px; margin: 40px 0;
+}
+.metric-card {
+  text-align: center;
+  padding: 28px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: border-color 0.3s;
+}
+.metric-card:hover { border-color: var(--accent); }
+.metric-value {
+  font-size: 2.2rem; font-weight: 800;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+}
+.metric-label {
+  font-size: 0.82rem; color: var(--text-muted);
+  margin-top: 6px; font-weight: 500;
+}
+
+/* ===== BibTeX ===== */
+.bibtex-box {
+  background: #0d1117;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-top: 24px;
+}
+.bibtex-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 20px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+}
+.bibtex-header span { font-size: 0.82rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+.copy-btn {
+  background: none; border: 1px solid var(--border);
+  color: var(--text-muted); padding: 5px 14px;
+  border-radius: 6px; font-size: 0.78rem; cursor: pointer;
+  transition: all 0.2s; font-family: inherit;
+}
+.copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+.bibtex-content {
+  padding: 20px 24px;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  color: #c9d1d9;
+}
+.bibtex-content .key { color: #79c0ff; }
+.bibtex-content .string { color: #a5d6ff; }
+.bibtex-content .comment { color: #8b949e; }
+
+/* ===== Footer ===== */
+.footer {
+  border-top: 1px solid var(--border);
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+.footer a { color: var(--text-muted); }
+.footer a:hover { color: var(--accent); }
+
+/* ===== Toast ===== */
+.toast {
+  position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--bg-card); border: 1px solid var(--accent);
+  color: var(--text); padding: 12px 24px; border-radius: var(--radius);
+  font-size: 0.88rem; font-weight: 500; z-index: 1000;
+  opacity: 0; transition: all 0.3s ease; pointer-events: none;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ===== Scroll Reveal ===== */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .hero { padding: 110px 20px 60px; }
+  .section { padding: 60px 20px; }
+  .results-inner { padding: 60px 20px; }
+  .abstract-box { padding: 24px; }
+  .method-arch { padding: 20px; }
+  .hero-buttons { flex-direction: column; align-items: center; }
+  .btn { width: 100%; justify-content: center; max-width: 280px; }
+  .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+  .img-placeholder span { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== Navigation ===== -->
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="nav-logo"><span class="dot"></span>Flow-MAR</div>
+    <div class="nav-links">
+      <a href="#abstract">Abstract</a>
+      <a href="#method">Method</a>
+      <a href="#results">Results</a>
+      <a href="#bibtex">BibTeX</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ===== Hero ===== -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="venue-tag">Pattern Recognition 2026</div>
+    <h1><span class="highlight">Flow-MAR</span><br>One-Step Consistency Flow for<br>CT Metal Artifact Reduction</h1>
+    <p class="hero-subtitle">A rectified flow framework with projection-aware refinement that restores fine anatomical details in a single step, achieving physical plausibility and structural fidelity simultaneously.</p>
+    <div class="authors">
+      <span>Zhanghao Chen<sup>1</sup></span>
+      <span>Yikun Zhang<sup>1,*</sup></span>
+      <span>Yang Chen<sup>1,*</sup></span>
+    </div>
+    <div class="authors">
+      <span class="affiliation"><sup>1</sup>Southeast University &nbsp;&nbsp; <sup>*</sup>Corresponding Author</span>
+    </div>
+    <div class="hero-buttons">
+      <a href="#" class="btn btn-primary" onclick="showToast('Paper link coming soon'); return false;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Paper
+      </a>
+      <a href="#" class="btn btn-secondary" onclick="showToast('Code repository coming soon'); return false;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+        Code
+      </a>
+      <a href="#" class="btn btn-secondary" onclick="showToast('Slides coming soon'); return false;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        Slides
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Abstract ===== -->
+<section class="section reveal" id="abstract">
+  <span class="section-label">Abstract</span>
+  <h2 class="section-title">Overview</h2>
+  <div class="abstract-box">
+    <p>Computed tomography (CT) is a widely used imaging modality for clinical diagnosis. However, metallic implants severely attenuate X-rays and corrupt the projection data, producing streak and shading artifacts that degrade image quality and impede accurate diagnosis. In recent years, generative models—especially diffusion models—have achieved remarkable success in image restoration and solving ill-posed inverse problems, motivating their application to metal artifact reduction. However, existing diffusion-based MAR methods are limited by slow sampling efficiency from noise initialization, or fail to fully leverage prior information and preserve anatomical fidelity. To address this issue, we present <strong>Flow-MAR</strong>, a one-step consistency flow framework with projection-aware refinement for CT MAR. We explicitly model a rectified flow paradigm from prior-guided to clean images in latent space, avoiding the training burden of diffusion models in high-dimensional image space and the pronounced difficulty of direct restoration from artifact-affected images in a few steps. A consistency learning mechanism with self-distillation and proposed alignment loss further enables one-step generation. To better restore fine anatomical details and mitigate structural inconsistency, we incorporate a residual refinement module with iterative projection-aware consistency to increase physical plausibility. Experiments show that Flow-MAR not only achieves meaningful improvements on simulated datasets but also demonstrates efficiency on clinical scenarios and downstream tasks.</p>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ===== Method ===== -->
+<section class="section reveal" id="method">
+  <span class="section-label">Method</span>
+  <h2 class="section-title">Architecture</h2>
+  <p style="color: var(--text-muted); margin-bottom: 24px; max-width: 800px;">Flow-MAR consists of two core components: a <strong>rectified flow generator</strong> that maps prior-guided images to clean images in latent space via one-step inference, and a <strong>projection-aware residual refinement module</strong> that enforces physical consistency through iterative projection constraints.</p>
+
+  <div class="method-arch">
+    <svg viewBox="0 0 900 340" xmlns="http://www.w3.org/2000/svg">
+      <!-- Background grid -->
+      <defs>
+        <linearGradient id="flowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#38bdf8;stop-opacity:0.8"/>
+          <stop offset="100%" style="stop-color:#22d3ee;stop-opacity:0.8"/>
+        </linearGradient>
+        <linearGradient id="boxGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color:#131c2e;stop-opacity:1"/>
+          <stop offset="100%" style="stop-color:#0f1623;stop-opacity:1"/>
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+          <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      <!-- Input: Artifact image -->
+      <rect x="20" y="120" width="110" height="100" rx="8" fill="url(#boxGrad)" stroke="#f87171" stroke-width="1.5"/>
+      <text x="75" y="160" text-anchor="middle" fill="#f87171" font-size="11" font-weight="600">Artifact</text>
+      <text x="75" y="178" text-anchor="middle" fill="#8b9bb4" font-size="10">Input CT</text>
+      <text x="75" y="205" text-anchor="middle" fill="#5a6a85" font-size="9">y</text>
+
+      <!-- Prior estimation -->
+      <rect x="170" y="40" width="120" height="60" rx="8" fill="url(#boxGrad)" stroke="#1e2a42" stroke-width="1.5"/>
+      <text x="230" y="68" text-anchor="middle" fill="#e8edf5" font-size="11" font-weight="600">Prior Estimation</text>
+      <text x="230" y="86" text-anchor="middle" fill="#8b9bb4" font-size="10">Network P</text>
+
+      <!-- Arrow: input -> prior -->
+      <line x1="130" y1="140" x2="170" y2="80" stroke="#5a6a85" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+      <defs><marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#5a6a85"/></marker></defs>
+
+      <!-- Latent space box -->
+      <rect x="340" y="100" width="180" height="140" rx="10" fill="#0a1428" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="4 3"/>
+      <text x="430" y="125" text-anchor="middle" fill="#38bdf8" font-size="10" font-weight="600" letter-spacing="1">LATENT SPACE</text>
+
+      <!-- Rectified Flow inside latent -->
+      <rect x="360" y="140" width="140" height="45" rx="6" fill="url(#boxGrad)" stroke="#38bdf8" stroke-width="1"/>
+      <text x="430" y="160" text-anchor="middle" fill="#e8edf5" font-size="10" font-weight="600">Rectified Flow</text>
+      <text x="430" y="176" text-anchor="middle" fill="#8b9bb4" font-size="9">z_prior → z_clean</text>
+
+      <!-- Consistency learning -->
+      <rect x="360" y="195" width="140" height="35" rx="6" fill="url(#boxGrad)" stroke="#22d3ee" stroke-width="1"/>
+      <text x="430" y="217" text-anchor="middle" fill="#22d3ee" font-size="9" font-weight="600">Consistency Learning</text>
+
+      <!-- Arrow prior -> latent -->
+      <line x1="290" y1="70" x2="340" y2="140" stroke="#5a6a85" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+
+      <!-- Decoder -->
+      <rect x="560" y="130" width="100" height="80" rx="8" fill="url(#boxGrad)" stroke="#1e2a42" stroke-width="1.5"/>
+      <text x="610" y="165" text-anchor="middle" fill="#e8edf5" font-size="11" font-weight="600">Decoder</text>
+      <text x="610" y="183" text-anchor="middle" fill="#8b9bb4" font-size="10">D</text>
+
+      <!-- Arrow latent -> decoder -->
+      <line x1="520" y1="170" x2="560" y2="170" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrowhead2)"/>
+      <defs><marker id="arrowhead2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#38bdf8"/></marker></defs>
+
+      <!-- Projection-aware refinement -->
+      <rect x="700" y="100" width="160" height="140" rx="10" fill="url(#boxGrad)" stroke="#34d399" stroke-width="1.5"/>
+      <text x="780" y="125" text-anchor="middle" fill="#34d399" font-size="10" font-weight="600" letter-spacing="0.5">PROJECTION-AWARE</text>
+      <text x="780" y="140" text-anchor="middle" fill="#34d399" font-size="10" font-weight="600">REFINEMENT</text>
+
+      <!-- Iterative loop inside -->
+      <rect x="720" y="155" width="120" height="30" rx="5" fill="#0a1428" stroke="#34d399" stroke-width="0.8"/>
+      <text x="780" y="175" text-anchor="middle" fill="#c9d1d9" font-size="9">Iterative Consistency</text>
+      <rect x="720" y="195" width="120" height="30" rx="5" fill="#0a1428" stroke="#34d399" stroke-width="0.8"/>
+      <text x="780" y="215" text-anchor="middle" fill="#c9d1d9" font-size="9">Residual Refinement</text>
+
+      <!-- Arrow decoder -> refinement -->
+      <line x1="660" y1="170" x2="700" y2="170" stroke="#5a6a85" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+
+      <!-- Output -->
+      <rect x="700" y="270" width="160" height="50" rx="8" fill="url(#boxGrad)" stroke="#34d399" stroke-width="1.5"/>
+      <text x="780" y="295" text-anchor="middle" fill="#34d399" font-size="11" font-weight="600">Clean CT</text>
+      <text x="780" y="312" text-anchor="middle" fill="#8b9bb4" font-size="10">Output x̂</text>
+
+      <!-- Arrow refinement -> output -->
+      <line x1="780" y1="240" x2="780" y2="270" stroke="#34d399" stroke-width="2" marker-end="url(#arrowhead3)"/>
+      <defs><marker id="arrowhead3" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#34d399"/></marker></defs>
+
+      <!-- One-step label -->
+      <rect x="385" y="260" width="90" height="28" rx="14" fill="#38bdf8" opacity="0.15" stroke="#38bdf8" stroke-width="1"/>
+      <text x="430" y="279" text-anchor="middle" fill="#38bdf8" font-size="10" font-weight="700">ONE-STEP</text>
+
+      <!-- Flow curve annotation -->
+      <path d="M 370 162 Q 430 130 490 162" fill="none" stroke="url(#flowGrad)" stroke-width="2" stroke-dasharray="3 2" filter="url(#glow)"/>
+    </svg>
+  </div>
+
+  <div class="method-steps">
+    <div class="method-card">
+      <div class="step-num">1</div>
+      <h3>Rectified Flow in Latent Space</h3>
+      <p>We model a straight flow from prior-guided latent to clean latent, avoiding high-dimensional image-space training and enabling efficient one-step inference via consistency distillation.</p>
+    </div>
+    <div class="method-card">
+      <div class="step-num">2</div>
+      <h3>Consistency Learning with Self-Distillation</h3>
+      <p>A self-distillation mechanism paired with an alignment loss ensures that multi-step and one-step trajectories produce consistent outputs, collapsing inference to a single generation step.</p>
+    </div>
+    <div class="method-card">
+      <div class="step-num">3</div>
+      <h3>Projection-Aware Residual Refinement</h3>
+      <p>Iterative projection consistency constraints on non-metal trajectories suppress hallucination, while a residual refinement module repairs secondary artifacts and restores tissue detail.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Results ===== -->
+<section class="results-section" id="results">
+  <div class="results-inner reveal">
+    <span class="section-label">Results</span>
+    <h2 class="section-title">Visual Comparison</h2>
+    <p style="color: var(--text-muted); margin-bottom: 24px; max-width: 800px;">Drag the slider to compare the artifact-affected input (left) with Flow-MAR's output (right). The model removes streak and shading artifacts while preserving fine anatomical structures.</p>
+
+    <div class="comparison-container">
+      <div class="comparison-header">
+        <span class="label-input">● Input (Metal Artifacts)</span>
+        <span class="label-output">● Flow-MAR Output</span>
+      </div>
+      <div class="comparison-slider" id="slider1">
+        <div class="img-layer img-before">
+          <div class="img-placeholder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20"/><path d="M2 12h20"/></svg>
+            <span>Artifact CT — replace with your image</span>
+          </div>
+        </div>
+        <div class="img-layer img-after" id="after1">
+          <div class="img-placeholder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span>Clean CT — replace with your image</span>
+          </div>
+        </div>
+        <div class="slider-handle" id="handle1"></div>
+      </div>
+    </div>
+
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-value">1-step</div>
+        <div class="metric-label">Inference Steps</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">↑ PSNR</div>
+        <div class="metric-label">Simulated Dataset</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">↑ SSIM</div>
+        <div class="metric-label">Structural Fidelity</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">↓ Runtime</div>
+        <div class="metric-label">vs. Diffusion Baselines</div>
+      </div>
+    </div>
+
+    <p style="color: var(--text-dim); font-size: 0.85rem; text-align: center;">Quantitative metrics will be updated upon paper acceptance. Replace placeholder values with final experimental results.</p>
+  </div>
+</section>
+
+<!-- ===== BibTeX ===== -->
+<section class="section reveal" id="bibtex">
+  <span class="section-label">Citation</span>
+  <h2 class="section-title">BibTeX</h2>
+  <p style="color: var(--text-muted); margin-bottom: 8px;">If you find our work useful, please cite our paper:</p>
+  <div class="bibtex-box">
+    <div class="bibtex-header">
+      <span>flow-mar.bib</span>
+      <button class="copy-btn" onclick="copyBibtex()">Copy</button>
+    </div>
+    <div class="bibtex-content" id="bibtex-content">
+<span class="comment">% Flow-MAR: One-Step Consistency Flow for CT Metal Artifact Reduction</span><br>
+@article{flowmar2026,
+  <span class="key">title</span>     = {Flow-MAR: One-Step Consistency Flow with Projection-Aware Refinement for CT Metal Artifact Reduction},
+  <span class="key">author</span>    = {Chen, Zhanghao and Zhang, Yikun and Chen, Yang},
+  <span class="key">journal</span>   = {Pattern Recognition},
+  <span class="key">year</span>      = {2026},
+  <span class="key">volume</span>    = {},
+  <span class="key">pages</span>     = {},
+  <span class="key">doi</span>       = {}
+}
+    </div>
+  </div>
+</section>
+
+<!-- ===== Footer ===== -->
+<footer class="footer">
+  <p>Flow-MAR &copy; 2026 &nbsp;|&nbsp; Pattern Recognition &nbsp;|&nbsp; Contact: <a href="mailto:yikun@seu.edu.cn">yikun@seu.edu.cn</a></p>
+  <p style="margin-top: 8px;">Website template inspired by academic project pages. All images are placeholders — replace with actual results.</p>
+</footer>
+
+<script>
+// ===== Scroll Reveal =====
+const revealEls = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1 });
+revealEls.forEach(el => observer.observe(el));
+
+// ===== Comparison Slider =====
+function initSlider(sliderId, afterId, handleId) {
+  const slider = document.getElementById(sliderId);
+  const after = document.getElementById(afterId);
+  const handle = document.getElementById(handleId);
+  let isDragging = false;
+
+  function update(x) {
+    const rect = slider.getBoundingClientRect();
+    let pct = ((x - rect.left) / rect.width) * 100;
+    pct = Math.max(0, Math.min(100, pct));
+    after.style.clipPath = `inset(0 0 0 ${pct}%)`;
+    handle.style.left = pct + '%';
+  }
+
+  slider.addEventListener('mousedown', (e) => { isDragging = true; update(e.clientX); });
+  window.addEventListener('mousemove', (e) => { if (isDragging) update(e.clientX); });
+  window.addEventListener('mouseup', () => { isDragging = false; });
+
+  slider.addEventListener('touchstart', (e) => { isDragging = true; update(e.touches[0].clientX); }, { passive: true });
+  window.addEventListener('touchmove', (e) => { if (isDragging) update(e.touches[0].clientX); }, { passive: true });
+  window.addEventListener('touchend', () => { isDragging = false; });
+}
+initSlider('slider1', 'after1', 'handle1');
+
+// ===== Copy BibTeX =====
+function copyBibtex() {
+  const text = document.getElementById('bibtex-content').innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = 'Copied!';
+    btn.style.color = '#34d399';
+    btn.style.borderColor = '#34d399';
+    setTimeout(() => {
+      btn.textContent = 'Copy';
+      btn.style.color = '';
+      btn.style.borderColor = '';
+    }, 2000);
+  }).catch(() => {
+    alert('Copy failed — please select and copy manually.');
+  });
+}
+
+// ===== Toast =====
+function showToast(msg) {
+  let toast = document.querySelector('.toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.className = 'toast';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => toast.classList.remove('show'), 2200);
+}
+
+// ===== Nav hide on scroll down =====
+let lastScroll = 0;
+const nav = document.querySelector('.nav');
+window.addEventListener('scroll', () => {
+  const current = window.pageYOffset;
+  if (current > lastScroll && current > 100) {
+    nav.style.transform = 'translateY(-100%)';
+  } else {
+    nav.style.transform = 'translateY(0)';
+  }
+  lastScroll = current;
+});
+</script>
+
+</body>
+</html>

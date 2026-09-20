@@ -87,6 +87,18 @@
     border-radius:8px;padding:20px 24px;margin:24px 0;font-size:15px;color:#2c3648;
   }
 
+  ul.hl{list-style:none;max-width:920px}
+  ul.hl li{
+    position:relative;padding:14px 0 14px 30px;font-size:15.5px;color:#2c3648;
+    border-bottom:1px dashed var(--line);
+  }
+  ul.hl li:last-child{border-bottom:none}
+  ul.hl li::before{
+    content:"";position:absolute;left:4px;top:23px;width:9px;height:9px;border-radius:50%;
+    background:var(--accent);
+  }
+  ul.hl strong{color:var(--brand)}
+
   /* BibTeX */
   pre.bib{
     background:#0f2438;color:#e6eef7;border-radius:10px;padding:22px 24px;
@@ -153,7 +165,19 @@
 
 <section>
   <div class="wrap">
-    <h2><span class="num">02</span>Method</h2>
+    <h2><span class="num">02</span>Highlights</h2>
+    <ul class="hl">
+      <li><strong>Prior-guided latent rectified flow.</strong> Instead of generating from random noise, we transport a <strong>structured prior image</strong> to the clean target in latent space, turning the restoration into a short, nearly straight and easier-to-learn trajectory.</li>
+      <li><strong>One-step consistency distillation.</strong> Consistency distillation together with an <strong>image-space alignment loss</strong> compresses the multi-step trajectory into a single forward pass, achieving quality close to the multi-step teacher while running orders of magnitude faster.</li>
+      <li><strong>Projection-aware residual refinement.</strong> An iterative projection-consistency step anchors the reconstruction to <strong>reliable non-metal measurements</strong>, suppressing hallucinated content while a refinement network recovers fine anatomical details.</li>
+      <li><strong>State-of-the-art generalization.</strong> Flow-MAR achieves the best PSNR/SSIM on simulated and cross-anatomy data and the highest downstream pelvic-segmentation Dice on real clinical scans.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="num">03</span>Method</h2>
     <p class="lead" style="margin-bottom:8px">
       Flow-MAR decouples restoration into two stages: a prior-guided latent consistency flow that generates a plausible result in a single step, and a projection-aware refinement that anchors the reconstruction to real CT measurements.
     </p>
@@ -175,7 +199,7 @@
 
 <section>
   <div class="wrap">
-    <h2><span class="num">03</span>Results</h2>
+    <h2><span class="num">04</span>Results</h2>
     <p class="lead" style="margin-bottom:8px">Flow-MAR is evaluated on one simulated and two external (cross-anatomy &amp; clinical) datasets. It suppresses artifacts most cleanly while preserving the sharpest anatomical boundaries.</p>
     <figure>
       <img src="assets/comp_syn.jpg" alt="Visual comparison on simulated dataset">
@@ -196,7 +220,7 @@
 
 <section>
   <div class="wrap">
-    <h2><span class="num">04</span>Challenging Cases &amp; Ablation</h2>
+    <h2><span class="num">05</span>Challenging Cases &amp; Ablation</h2>
     <div class="cols">
       <figure>
         <img src="assets/cases.jpg" alt="Challenging cases with slender implants">
@@ -212,7 +236,7 @@
 
 <section id="bibtex">
   <div class="wrap">
-    <h2><span class="num">05</span>BibTeX</h2>
+    <h2><span class="num">06</span>BibTeX</h2>
     <pre class="bib">@article{chen2026flowmar,
   title   = {Flow-MAR: One-Step Consistency Flow with Projection-Aware Refinement for CT Metal Artifact Reduction},
   author  = {Chen, Zhanghao and Zhang, Yikun and Chen, Yang},

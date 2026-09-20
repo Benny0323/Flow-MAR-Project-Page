@@ -144,7 +144,7 @@
     <p class="abstract">
       Computed tomography (CT) is widely used for clinical diagnosis, but metallic implants severely attenuate X-rays and corrupt projection data, producing streak and shading artifacts that degrade image quality and impede diagnosis. While diffusion models have shown success in image restoration, existing diffusion-based metal artifact reduction (MAR) methods suffer from slow sampling from noise initialization and fail to preserve anatomical fidelity. We present <strong>Flow-MAR</strong>, a one-step consistency flow framework with projection-aware refinement. We model a rectified flow from a prior-guided to a clean image in latent space, avoiding high-dimensional diffusion training and direct few-step restoration. Consistency distillation with an alignment loss enables one-step generation, and a residual refinement module with iterative projection consistency improves physical plausibility and detail recovery. Experiments show that Flow-MAR achieves state-of-the-art results on simulated, cross-anatomy and clinical datasets, while remaining efficient for clinical use.
     </p>
-    <figure style="max-width:480px;margin-left:auto;margin-right:auto">
+    <figure style="max-width:200px;margin-left:auto;margin-right:auto">
       <img src="assets/intro.jpg" alt="Restoration in latent manifold">
       <figcaption>Encoding the prior-guided and clean images into a lower-dimensional latent manifold yields a smoother, more direct restoration trajectory.</figcaption>
     </figure>

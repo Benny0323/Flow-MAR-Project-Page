@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flow-MAR: One-Step Consistency Flow for CT Metal Artifact Reduction</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f3d6e'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='white' font-family='Georgia,serif'%3EF%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --ink:#1b2433;
+    --muted:#5a6678;
+    --line:#e6e9ef;
+    --bg:#ffffff;
+    --soft:#f5f7fa;
+    --brand:#0f3d6e;
+    --accent:#1f6fb2;
+    --chip:#eef3f9;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,"PingFang SC","Microsoft YaHei",sans-serif;
+    color:var(--ink);
+    background:var(--bg);
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1000px;margin:0 auto;padding:0 28px}
+
+  /* Hero */
+  .hero{
+    background:linear-gradient(180deg,#f7faff 0%,#ffffff 100%);
+    border-bottom:1px solid var(--line);
+    padding:72px 0 48px;
+    text-align:center;
+  }
+  .venue{
+    display:inline-block;
+    font-size:13px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--accent);font-weight:600;
+    background:var(--chip);border:1px solid #dbe6f2;
+    padding:5px 14px;border-radius:999px;margin-bottom:26px;
+  }
+  h1.title{
+    font-family:Georgia,"Times New Roman",serif;
+    font-size:40px;line-height:1.25;font-weight:700;color:var(--brand);
+    max-width:880px;margin:0 auto 22px;letter-spacing:.2px;
+  }
+  .authors{font-size:17px;color:var(--ink);margin-bottom:6px}
+  .authors a{color:var(--accent);text-decoration:none}
+  .affil{font-size:14.5px;color:var(--muted);margin-bottom:30px}
+  .buttons{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:10px 20px;border-radius:8px;font-size:14.5px;font-weight:600;
+    text-decoration:none;transition:.18s;
+  }
+  .btn-solid{background:var(--brand);color:#fff}
+  .btn-solid:hover{background:#0c325a}
+  .btn-ghost{background:#fff;color:var(--brand);border:1px solid #cdd9e8}
+  .btn-ghost:hover{border-color:var(--brand)}
+  .btn svg{width:16px;height:16px;fill:currentColor}
+
+  /* Sections */
+  section{padding:54px 0;border-bottom:1px solid var(--line)}
+  h2{
+    font-family:Georgia,"Times New Roman",serif;
+    font-size:26px;color:var(--brand);margin-bottom:18px;font-weight:700;
+  }
+  h2 .num{color:var(--accent);font-family:inherit;margin-right:10px}
+  p.lead{font-size:16px;color:#2c3648;max-width:880px}
+  .abstract{font-size:16px;color:#2c3648;max-width:900px;text-align:justify}
+
+  figure{margin:26px 0}
+  figure img{
+    width:100%;border:1px solid var(--line);border-radius:10px;
+    box-shadow:0 6px 24px rgba(15,61,110,.07);display:block;
+    background:#fff;
+  }
+  figcaption{font-size:13.5px;color:var(--muted);margin-top:10px;text-align:center;max-width:900px;margin-left:auto;margin-right:auto}
+
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+  .cols figure{margin:0}
+
+  .highlight{
+    background:var(--soft);border:1px solid var(--line);border-left:4px solid var(--accent);
+    border-radius:8px;padding:20px 24px;margin:24px 0;font-size:15px;color:#2c3648;
+  }
+
+  ul.hl{list-style:none;max-width:920px}
+  ul.hl li{
+    position:relative;padding:14px 0 14px 30px;font-size:15.5px;color:#2c3648;
+    border-bottom:1px dashed var(--line);
+  }
+  ul.hl li:last-child{border-bottom:none}
+  ul.hl li::before{
+    content:"";position:absolute;left:4px;top:23px;width:9px;height:9px;border-radius:50%;
+    background:var(--accent);
+  }
+  ul.hl strong{color:var(--brand)}
+
+  /* BibTeX */
+  pre.bib{
+    background:#0f2438;color:#e6eef7;border-radius:10px;padding:22px 24px;
+    font-family:"SF Mono",Menlo,Consolas,monospace;font-size:13px;line-height:1.6;
+    overflow-x:auto;
+  }
+
+  footer{padding:36px 0;text-align:center;color:var(--muted);font-size:13.5px}
+
+  /* Tables */
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:8px 0}
+  table.paper-table{width:100%;border-collapse:collapse;font-size:13px;line-height:1.5}
+  table.paper-table th{background:var(--accent);color:#fff;padding:8px 10px;text-align:left;font-weight:600;white-space:nowrap}
+  table.paper-table td{padding:6px 10px;border-bottom:1px solid #e2e8f0;white-space:nowrap}
+  table.paper-table tr:hover{background:#f1f5f9}
+  table.paper-table tr.best-row{background:#ecfdf5;font-weight:500}
+  table.paper-table tr.best-row:hover{background:#d1fae5}
+  table.paper-table td.best-cell{background:#ecfdf5;font-weight:600}
+  table.small-table{font-size:12.5px}
+  table.small-table th{padding:6px 8px}
+  table.small-table td{padding:5px 8px}
+  table.dice-table td:first-child,table.dice-table th:first-child{font-weight:500}
+
+  @media (max-width:760px){
+    h1.title{font-size:28px}
+    .cols{grid-template-columns:1fr}
+    .hero{padding:52px 0 36px}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="venue">Under Review</span>
+    <h1 class="title">Flow-MAR: One-Step Consistency Flow with Projection-Aware Refinement for CT Metal Artifact Reduction</h1>
+    <div class="authors">
+      <span>Zhanghao Chen<sup>1</sup></span>,
+      <span>Shenglin Lei<sup>1</sup></span>,
+      <span>Yuxiang Ge<sup>1</sup></span>,
+      <span>Yikun Zhang<sup>1</sup></span>,
+      <span>Rongjun Ge<sup>2</sup></span>,
+      <span>Yang Chen<sup>1</sup></span>
+    </div>
+    <div class="affil"><sup>1</sup> Laboratory of Image Science and Technology, School of Computer Science and Engineering, Southeast University, Nanjing, China<br><sup>2</sup> School of Biological Science and Medical Engineering, Southeast University, Nanjing, China</div>
+    <div class="buttons">
+      <span class="btn btn-ghost" style="cursor:default;opacity:0.6">
+        <svg viewBox="0 0 24 24"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.93c.58.1.79-.25.79-.56v-2.17c-3.2.7-3.87-1.37-3.87-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.23-1.28-5.23-5.68 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5z"/></svg>
+        Code (coming soon)
+      </span>
+      <a class="btn btn-ghost" href="#bibtex">BibTeX</a>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <figure>
+      <img src="assets/framework.jpg" alt="Flow-MAR framework overview">
+      <figcaption>Overview of Flow-MAR. A structured prior is first constructed by the Prior-Net, then distilled into a one-step consistency flow in latent space, and finally refined by projection-aware residual correction for physical consistency.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="num">01</span>Abstract</h2>
+    <p class="abstract">
+      Computed tomography (CT) is widely used for clinical diagnosis, but metallic implants severely attenuate X-rays and corrupt projection data, producing streak and shading artifacts that degrade image quality and impede diagnosis. While diffusion models have demonstrated success in image restoration, existing diffusion-based metal artifact reduction (MAR) methods suffer from slow sampling from noise initialization or fail to preserve anatomical fidelity. We present <strong>Flow-MAR</strong>, a one-step consistency flow framework with projection-aware refinement. We model a rectified flow from prior-guided to clean images in latent space, avoiding high-dimensional diffusion training and easing few-step restoration from severely artifact-corrupted inputs. Consistency distillation with an image-space alignment loss enables faithful one-step generation, and a residual refinement module with iterative projection consistency improves measurement fidelity and detail recovery. Experiments show that Flow-MAR not only achieves meaningful improvements on simulated dataset but also demonstrates effectiveness on clinical scenarios and downstream tasks.
+    </p>
+    <figure style="max-width:400px;margin-left:auto;margin-right:auto">
+      <img src="assets/intro.jpg" alt="Restoration in latent manifold">
+      <figcaption>Encoding the prior-guided and clean images into a lower-dimensional latent manifold yields a smoother, more direct restoration trajectory.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="num">02</span>Highlights</h2>
+    <ul class="hl">
+      <li>We propose a prior-guided latent rectified flow framework for CT MAR that transports a structured prior image to the clean CT representation, utilizing prior information with a more learnable trajectory in latent space.</li>
+      <li>We introduce a consistency distillation mechanism with an image-space alignment loss that distills multi-step transport into a single generation, preventing teacher approximation errors from leaking into the distillation target and enabling efficient one-step generation.</li>
+      <li>We design a projection-aware residual refinement module that enforces projection consistency to improve physical measurement consistency while suppressing residual streaks and recovering local tissue details.</li>
+      <li>Experimental results show that Flow-MAR outperforms existing methods in both visual fidelity and quantitative evaluation metrics across multiple datasets and downstream tasks.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="num">03</span>Method</h2>
+    <p class="lead" style="margin-bottom:8px">
+      Flow-MAR decouples restoration into two stages: a prior-guided latent consistency flow that generates a plausible result in a single step, and a projection-aware refinement that anchors the reconstruction to real CT measurements.
+    </p>
+    <div class="cols">
+      <figure>
+        <img src="assets/CRF.jpg" alt="Latent consistency rectified flow">
+        <figcaption>The latent consistency rectified flow distills a multi-step prior-to-clean trajectory into a single one-step endpoint prediction, supervised with an image-space alignment loss.</figcaption>
+      </figure>
+      <figure>
+        <img src="assets/projection.jpg" alt="Projection-aware consistency">
+        <figcaption>Projection-aware consistency enforces data fidelity on reliable non-metal rays, removing physically inconsistent content without drifting away from the stage-I reconstruction.</figcaption>
+      </figure>
+    </div>
+    <div class="highlight">
+      <strong>Key idea.</strong> Rather than generating from pure noise, we start from a structured prior that already suppresses severe artifacts. The rectified flow then needs only a short, nearly straight transport path, which consistency distillation compresses into one step while an image-space alignment loss preserves pixel fidelity.
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="num">04</span>Results</h2>
+    <p class="lead" style="margin-bottom:8px">Flow-MAR is evaluated on one simulated dataset and one clinical dataset covering different anatomies and artifact distributions. It suppresses artifacts most cleanly while preserving the sharpest anatomical boundaries.</p>
+    <figure>
+      <img src="assets/comp_syn.jpg" alt="Visual comparison on simulated dataset">
+      <figcaption>Comparison on the simulated Syn-DeepLesion set, covering implants from large to small. Flow-MAR removes streaks most completely and recovers the sharpest soft-tissue and bony details.</figcaption>
+    </figure>
+    <figure>
+      <img src="assets/comp_cli.jpg" alt="Clinical comparison with segmentation">
+      <figcaption>Clinical CLINIC-METAL with multi-bone segmentation: Flow-MAR yields the most accurate pelvic boundaries and the highest downstream Dice.</figcaption>
+    </figure>
+
+    <h3 style="margin-top:32px;margin-bottom:12px;font-size:18px">Syn-DeepLesion: PSNR (dB) / SSIM</h3>
+    <div class="table-wrap">
+      <table class="paper-table">
+        <thead>
+          <tr>
+            <th>Method</th>
+            <th>Large →</th>
+            <th></th>
+            <th></th>
+            <th>→ Small</th>
+            <th>Average</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Xma</td><td>17.80 / 0.6468</td><td>20.92 / 0.7483</td><td>24.08 / 0.7759</td><td>26.81 / 0.7994</td><td>28.51 / 0.8182</td><td>24.52 / 0.7730</td></tr>
+          <tr><td>LI (Radiology'87)</td><td>28.65 / 0.8998</td><td>29.12 / 0.9195</td><td>31.25 / 0.9317</td><td>35.40 / 0.9502</td><td>36.40 / 0.9562</td><td>32.84 / 0.9365</td></tr>
+          <tr><td>NMAR (Med. Phys.'10)</td><td>30.12 / 0.9036</td><td>30.25 / 0.9179</td><td>31.93 / 0.9278</td><td>34.80 / 0.9403</td><td>35.72 / 0.9516</td><td>33.03 / 0.9319</td></tr>
+          <tr><td>InDuDoNet+ (MedIA'23)</td><td>34.54 / 0.9613</td><td>36.18 / 0.9729</td><td>38.92 / 0.9790</td><td>43.94 / 0.9857</td><td>44.68 / 0.9871</td><td>40.59 / 0.9796</td></tr>
+          <tr><td>OSCNet+ (TMI'24)</td><td>35.67 / 0.9701</td><td>37.70 / 0.9790</td><td>39.66 / 0.9832</td><td>44.23 / 0.9879</td><td>45.36 / 0.9890</td><td>41.38 / 0.9836</td></tr>
+          <tr><td>ControlNet (ICCV'23)</td><td>33.92 / 0.9469</td><td>35.40 / 0.9597</td><td>36.11 / 0.9636</td><td>37.56 / 0.9665</td><td>37.67 / 0.9674</td><td>36.50 / 0.9628</td></tr>
+          <tr><td>DuDoDp (TMI'24)</td><td>33.41 / 0.9434</td><td>33.28 / 0.9484</td><td>34.19 / 0.9537</td><td>35.45 / 0.9604</td><td>35.59 / 0.9615</td><td>34.59 / 0.9552</td></tr>
+          <tr><td>Diff-MAR (JBHI'24)</td><td>30.67 / 0.9505</td><td>35.74 / 0.9761</td><td>37.32 / 0.9778</td><td>41.80 / 0.9820</td><td>43.36 / 0.9836</td><td>38.89 / 0.9772</td></tr>
+          <tr><td>DCDiff (MICCAI'24)</td><td>37.13 / 0.9640</td><td>39.04 / 0.9746</td><td><strong>39.82</strong> / 0.9775</td><td>42.91 / 0.9809</td><td>43.25 / 0.9814</td><td>41.01 / 0.9774</td></tr>
+          <tr><td>FIND-Net (MICCAI'25)</td><td>35.17 / 0.9599</td><td>36.50 / 0.9724</td><td>38.16 / 0.9774</td><td>42.25 / 0.9814</td><td>43.30 / 0.9829</td><td>39.79 / 0.9770</td></tr>
+          <tr><td>Restore-RWKV (JBHI'25)</td><td>33.49 / 0.9466</td><td>37.64 / 0.9685</td><td>37.36 / 0.9709</td><td>41.50 / 0.9754</td><td>41.99 / 0.9754</td><td>39.20 / 0.9703</td></tr>
+          <tr><td>MAR-Mamba (TRPMS'26)</td><td>35.58 / 0.9506</td><td>37.98 / 0.9663</td><td>37.54 / 0.9680</td><td>40.46 / 0.9712</td><td>41.84 / 0.9736</td><td>39.17 / 0.9680</td></tr>
+          <tr><td>SCMA (arXiv'26)</td><td>35.18 / 0.9558</td><td>36.27 / 0.9643</td><td>37.83 / 0.9704</td><td>41.69 / 0.9757</td><td>42.23 / 0.9819</td><td>39.29 / 0.9716</td></tr>
+          <tr class="best-row"><td><strong>Flow-MAR (Ours)</strong></td><td><strong>37.32 / 0.9782</strong></td><td><strong>39.37 / 0.9849</strong></td><td>39.56 / <strong>0.9865</strong></td><td><strong>44.34 / 0.9898</strong></td><td><strong>45.38 / 0.9907</strong></td><td><strong>41.90 / 0.9872</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="margin-top:32px;margin-bottom:12px;font-size:18px">CLINIC-METAL: Dice (%) of four pelvic structures</h3>
+    <div class="table-wrap">
+      <table class="paper-table dice-table">
+        <tbody>
+          <tr><td>Xma</td><td>94.80</td><td>Diff-MAR (JBHI'24)</td><td>95.35</td></tr>
+          <tr><td>LI (Radiology'87)</td><td>94.85</td><td>DCDiff (MICCAI'24)</td><td>95.67</td></tr>
+          <tr><td>NMAR (Med. Phys.'10)</td><td>95.49</td><td>FIND-Net (MICCAI'25)</td><td>95.56</td></tr>
+          <tr><td>InDuDoNet+ (MedIA'23)</td><td>95.92</td><td>Restore-RWKV (JBHI'25)</td><td>95.75</td></tr>
+          <tr><td>ControlNet (ICCV'23)</td><td>94.91</td><td>MAR-Mamba (TRPMS'26)</td><td>95.16</td></tr>
+          <tr><td>OSCNet+ (TMI'24)</td><td>96.11</td><td>SCMA (arXiv'26)</td><td>96.02</td></tr>
+          <tr><td>DuDoDp (TMI'24)</td><td>94.93</td><td class="best-cell"><strong>Flow-MAR (Ours)</strong></td><td class="best-cell"><strong>96.25</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="num">05</span>Ablation Study</h2>
+    <p class="lead" style="margin-bottom:16px">
+      We validate each key component of Flow-MAR through ablation studies on the simulated Syn-DeepLesion dataset. The ablations cover three aspects: (1) the restoration starting point, comparing Gaussian noise, the raw metal-affected image, and the learned structured prior; (2) the consistency distillation mechanism, comparing the 30-step teacher, one-step teacher, vanilla direct regression, and the consistency student with/without the image-space alignment loss; (3) the projection-aware residual refinement module, comparing Stage I only, the full two-stage pipeline, and applying Stage II directly to the prior image.
+    </p>
+    <figure>
+      <img src="assets/ablation.jpg" alt="Ablation study">
+      <figcaption>Visual ablation on the starting point, consistency distillation, image-space alignment loss, and projection-aware residual refinement. Red arrows highlight the improvement brought by each added component.</figcaption>
+    </figure>
+
+    <div class="cols" style="margin-top:24px">
+      <div>
+        <h4 style="margin-bottom:8px;font-size:15px">Starting Point</h4>
+        <div class="table-wrap">
+          <table class="paper-table small-table">
+            <thead><tr><th>Configuration</th><th>PSNR</th><th>SSIM</th></tr></thead>
+            <tbody>
+              <tr><td>Gaussian noise + concat</td><td>35.33</td><td>0.9565</td></tr>
+              <tr><td>Gaussian noise + μ=0.2</td><td>35.03</td><td>0.9543</td></tr>
+              <tr><td>Gaussian noise + μ=0.5</td><td>34.87</td><td>0.9520</td></tr>
+              <tr><td>Gaussian noise + μ=1.0</td><td>34.04</td><td>0.9387</td></tr>
+              <tr><td>X<sub>ma</sub> directly</td><td>36.48</td><td>0.9628</td></tr>
+              <tr class="best-row"><td><strong>Prior (Ours)</strong></td><td><strong>36.96</strong></td><td><strong>0.9666</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <h4 style="margin-bottom:8px;font-size:15px">Consistency Distillation</h4>
+        <div class="table-wrap">
+          <table class="paper-table small-table">
+            <thead><tr><th>Configuration</th><th>PSNR</th><th>SSIM</th></tr></thead>
+            <tbody>
+              <tr><td>Teacher (30-step)</td><td>38.97</td><td>0.9774</td></tr>
+              <tr><td>Teacher (one-step)</td><td>38.39</td><td>0.9731</td></tr>
+              <tr><td>Vanilla U-Net (one-step)</td><td>38.71</td><td>0.9758</td></tr>
+              <tr><td>Student w/ CD</td><td>39.83</td><td>0.9812</td></tr>
+              <tr class="best-row"><td><strong>Student w/ CD + align</strong></td><td><strong>40.12</strong></td><td><strong>0.9821</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:20px;max-width:480px">
+      <h4 style="margin-bottom:8px;font-size:15px">Projection-Aware Refinement</h4>
+      <div class="table-wrap">
+        <table class="paper-table small-table">
+          <thead><tr><th>Configuration</th><th>PSNR</th><th>SSIM</th></tr></thead>
+          <tbody>
+            <tr><td>Stage I only</td><td>40.12</td><td>0.9821</td></tr>
+            <tr class="best-row"><td><strong>Stage I + Stage II (Ours)</strong></td><td><strong>41.90</strong></td><td><strong>0.9872</strong></td></tr>
+            <tr><td>Prior + Stage II</td><td>36.75</td><td>0.9696</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="num">06</span>Challenging Cases</h2>
+    <figure>
+      <img src="assets/cases.jpg" alt="Challenging cases with high-attenuation implants">
+      <figcaption>Challenging clinical case with two small but high-attenuation metallic implants that induce severe photon starvation and spatially extended streaks.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="num">07</span>Efficiency</h2>
+    <p class="lead" style="margin-bottom:16px">Model size and per-slice inference time on Syn-DeepLesion, measured on a single NVIDIA RTX 4090 GPU (batch size 1). Flow-MAR runs in 0.06s per slice, 25× faster than the fastest diffusion model (Diff-MAR, 1.5s).</p>
+    <div class="table-wrap">
+      <table class="paper-table dice-table">
+        <thead><tr><th>Method</th><th>Params (M)</th><th>Time (s)</th><th>Method</th><th>Params (M)</th><th>Time (s)</th></tr></thead>
+        <tbody>
+          <tr><td>LI (Radiology'87)</td><td>—</td><td>0.0458</td><td>Diff-MAR (JBHI'24)</td><td>25.58</td><td>1.5000</td></tr>
+          <tr><td>NMAR (Med. Phys.'10)</td><td>—</td><td>0.1951</td><td>DCDiff (MICCAI'24)</td><td>22.64</td><td>2.5714</td></tr>
+          <tr><td>InDuDoNet+ (MedIA'23)</td><td>1.75</td><td>0.1432</td><td>FIND-Net (MICCAI'25)</td><td>1.11</td><td>0.4741</td></tr>
+          <tr><td>OSCNet+ (TMI'24)</td><td>1.28</td><td>0.0661</td><td>Restore-RWKV (JBHI'25)</td><td>1.22</td><td>0.0519</td></tr>
+          <tr><td>ControlNet (ICCV'23)</td><td>119.53</td><td>3.6114</td><td>MAR-Mamba (TRPMS'26)</td><td>0.59</td><td>0.0368</td></tr>
+          <tr><td>DuDoDp (TMI'24)</td><td>82.36</td><td>4.4164</td><td>SCMA (arXiv'26)</td><td>50.46</td><td>1.7670</td></tr>
+          <tr><td><strong>Flow-MAR Stage I only</strong></td><td>90.11</td><td><strong>0.0295</strong></td><td><strong>Flow-MAR (Ours)</strong></td><td>92.25</td><td>0.0585</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="bibtex">
+  <div class="wrap">
+    <h2><span class="num">08</span>BibTeX</h2>
+    <pre class="bib">@article{chen2026flowmar,
+  title   = {Flow-MAR: One-Step Consistency Flow with Projection-Aware Refinement for CT Metal Artifact Reduction},
+  author  = {Chen, Zhanghao and Lei, Shenglin and Ge, Yuxiang and Zhang, Yikun and Ge, Rongjun and Chen, Yang},
+  note    = {Under review},
+  year    = {2026}
+}</pre>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    &copy; 2026 Laboratory of Image Science and Technology, Southeast University &middot; Built for research presentation
+  </div>
+</footer>
+
+</body>
+</html>
